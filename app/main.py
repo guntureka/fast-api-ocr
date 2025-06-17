@@ -1,31 +1,29 @@
-import os
-from contextlib import asynccontextmanager
-
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.schedulers.base import SchedulerNotRunningError
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.index import api_router
 from app.core.config import settings
 
-scheduler = BackgroundScheduler()
+
+def verify_api_key(request: Request):
+    api_key = request.headers.get("x-api-key")
+    if api_key != settings.API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API Key"
+        )
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    if os.getenv("RUN_MAIN") == "true" and settings.ENVIRONMENT == "development":
-        scheduler.start()
+app = FastAPI(
+    title="Alibaba Energy Expert API",
+    debug=True,
+)
 
-    yield
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    try:
-        if scheduler.running:
-            scheduler.shutdown()
-    except SchedulerNotRunningError:
-        # Scheduler sudah tidak jalan, abaikan error ini
-        pass
-
-
-app = FastAPI(title="Alibaba Energy Expert API", debug=True, lifespan=lifespan)
-
-app.include_router(api_router)
+app.include_router(api_router, dependencies=[Depends(verify_api_key)])

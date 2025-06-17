@@ -6,6 +6,7 @@ from alibabacloud_energyexpertexternal20220923.client import (
     Client as EnergyExpertClient,
 )
 from alibabacloud_tea_openapi import models as open_api_models
+from alibabacloud_tea_util import models as util_models
 
 from app.core.config import settings
 from app.models.energy_expert import (
@@ -25,6 +26,7 @@ def create_client() -> EnergyExpertClient:
 
 async def submit_vlextraction_task_service(payload: SubmitVLExtractionTaskRequest):
     client = create_client()
+
     request = EnergyExpertModel.SubmitVLExtractionTaskRequest(
         file_url=payload.file_url,
         file_name=payload.file_name,
@@ -32,7 +34,14 @@ async def submit_vlextraction_task_service(payload: SubmitVLExtractionTaskReques
         template_id=payload.template_id,
     )
 
-    result = await client.submit_vlextraction_task_async(request)
+    headers = []
+    runtime = util_models.RuntimeOptions()
+
+    result = await client.submit_vlextraction_task_with_options_async(
+        request, headers, runtime
+    )
+
+    print(result)
     return result.body.to_map()
 
 
@@ -41,6 +50,7 @@ async def get_vlextraction_result_service(payload: GetVLExtractionResultRequest)
     request = EnergyExpertModel.GetVLExtractionResultRequest(task_id=payload.task_id)
 
     result = await client.get_vlextraction_result_async(request)
+
     data = result.body.to_map()
 
     kv_list_info = data.get("data", {}).get("kvListInfo", [])

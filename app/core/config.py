@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     ALIBABA_ENERGY_EXPERT_ENDPOINT: str
     ALIBABA_CLOUD_ACCESS_KEY_ID: str
     ALIBABA_CLOUD_ACCESS_KEY_SECRET: str
+    API_KEY: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
